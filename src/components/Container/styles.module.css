@@ -1,0 +1,14 @@
+.container-fluid {
+    display: flex;
+    justify-content: center; 
+    gap: 0.8rem;            
+}
+
+.container {
+    margin: 0;              
+}
+
+.content {
+    margin: 0;
+    padding: 0.8rem;
+}

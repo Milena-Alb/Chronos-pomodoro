@@ -7,14 +7,18 @@ import type { TaskModel } from "../../models/TaskModel";
 import { useTaskContext } from "../../contexts/TaskContext/useTaskContext";
 import { getNextCycle } from "../../utils/getNextCycle";
 import { getNextCycleType } from "../../utils/getNextCycleType";
-import { formattedSecondsToMinutes } from "../../utils/formatSecondToMinutes";
+import { TaskActionTypes } from "../../contexts/TaskContext/taskActions";
+import { Tips } from "../Tips";
+import { showMessage } from "../../adapters/showMessage";
 
 export function MainForm() {
     const taskNameInput = useRef<HTMLInputElement>(null);
-    const { state, setState } = useTaskContext();
+    const { state, dispatch } = useTaskContext();
+    const lastTaskName = state.tasks[state.tasks.length - 1]?.name;
 
     const nextCycle = getNextCycle(state.currentCycle);
     const nextCycleType = getNextCycleType(nextCycle);
+
 
     function handleCreateNewTask(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
@@ -24,7 +28,7 @@ export function MainForm() {
         const taskName = taskNameInput.current.value.trim(); // Remove os espaços antes e depois da string. ex: ' valor ' = 'valor'
 
         if (!taskName) {
-            alert("Digite o nome da tarefa");
+            showMessage.warning("Digite o nome da tarefa");
             return;
         }
 
@@ -38,40 +42,17 @@ export function MainForm() {
             type: nextCycleType
         };
 
-        const secondsRemaining = newTask.duration * 60;
-
-        setState(prevState => {
-            return {
-                ...prevState,
-                config: { ...prevState.config },
-                activeTask: newTask,
-                currentCycle: nextCycle,
-                secondsRemaining,
-                formattedSecondsRemaining: formattedSecondsToMinutes(secondsRemaining),
-                tasks: [...prevState.tasks, newTask]
-            };
-        });
+        dispatch({ type: TaskActionTypes.START_TASK, payload: newTask })
     }
 
     function handleInterruptTask(e: React.MouseEvent<HTMLButtonElement, MouseEvent>) {
         e.preventDefault();
-        setState(prevState => {
-            return {
-                ...prevState,
-                activeTask: null,
-                secondsRemaining: 0,
-                formattedSecondsRemaining: '00:00',
-                tasks: prevState.tasks.map(task => {
-                    if (prevState.activeTask && prevState.activeTask.id === task.id){
-                        return { ...task, interruptDate: Date.now()};
-                    }
-                    return task;
-                }),
-            };
-        });
-
+        showMessage.error('Tarefa Interrompida!');
+        dispatch({ type: TaskActionTypes.INTERRUPT_TASK });
     }
 
+    // {console.log('state:', state)}
+    // {console.log('activeTask:', state.activeTask)}
     return (
         <form onSubmit={handleCreateNewTask} className="form" action="">
             <div className="formRow">
@@ -82,10 +63,11 @@ export function MainForm() {
                     placeholder="Digite algo"
                     ref={taskNameInput}
                     disabled={!!state.activeTask}
+                    defaultValue={lastTaskName} // nâo precisa controlar o valor
                 />
             </div>
             <div className="formRow">
-                <p>O próximo ciclo é de {state.config[nextCycleType]} mins</p>
+                <Tips />
             </div>
             {state.currentCycle > 0 && (
                 <div className="formRow">

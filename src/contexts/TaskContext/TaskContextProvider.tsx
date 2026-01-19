@@ -26,7 +26,7 @@ export function TaskContextProvider({ children }: TaskContextProviderProps) {
         };
     }); 
     const worker = TimerWorkerManager.getIntance();
-    let playBeepRef = useRef<() => void>(null);
+    const playBeepRef = useRef<() => void>(null);
 
     worker.onMessage((e) => {
         const countDownSeconds = e.data;
